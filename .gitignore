@@ -1,0 +1,27 @@
+# --- W0.2: vendor data is a one-off clone, never tracked (490 MB corpus) ---
+data/*
+!data/MANIFEST.md
+!data/CORPUS_HASH.txt
+
+# --- environments & caches ---
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- model artifacts ---
+*.gguf
+artifacts/
+
+# --- os / editor ---
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# --- runtime / session state (not pipeline artifacts) ---
+.omo/run-continuation/
+.omo/ralph-loop.local.md
+.codegraph
