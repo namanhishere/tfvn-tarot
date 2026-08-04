@@ -31,6 +31,12 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV_PY="$REPO_ROOT/.venv/bin/python"
 BUILD_INFO="$REPO_ROOT/artifacts/llamacpp_build_info.txt"
 
+# venv provides the cmake launcher + ninja binary; expose them to cmake/ninja
+# subprocess lookups without requiring an activated venv.
+if [ -d "$REPO_ROOT/.venv/bin" ]; then
+  export PATH="$REPO_ROOT/.venv/bin:$PATH"
+fi
+
 log() { printf '[W0.1] %s\n' "$*"; }
 die() { printf '[W0.1] FATAL: %s\n' "$*" >&2; exit 1; }
 
@@ -43,7 +49,8 @@ if ! command -v cmake >/dev/null 2>&1; then
   "$VENV_PY" -m pip install --quiet "cmake==$CMAKE_VER" "ninja==$NINJA_VER"
 fi
 CMAKE_BIN="$(command -v cmake || true)"
-[ -n "$CMAKE_BIN" ] || die "cmake still not on PATH"
+[ -z "$CMAKE_BIN" ] && [ -x "$REPO_ROOT/.venv/bin/cmake" ] && CMAKE_BIN="$REPO_ROOT/.venv/bin/cmake"
+[ -n "$CMAKE_BIN" ] || die "cmake not on PATH; pip install 'cmake' into .venv provides .venv/bin/cmake"
 log "cmake: $("$CMAKE_BIN" --version | head -1)"
 
 # --------------------------------------------------------- clone + build ----
