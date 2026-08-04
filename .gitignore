@@ -22,6 +22,5 @@ artifacts/
 .vscode/
 
 # --- runtime / session state (not pipeline artifacts) ---
-.omo/run-continuation/
-.omo/ralph-loop.local.md
+.omo/
 .codegraph
