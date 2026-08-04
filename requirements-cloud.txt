@@ -1,0 +1,27 @@
+# W0.3 — Cloud GPU training environment (reproducible artifact).
+# Install: pip install -r requirements-cloud.txt
+# Standard PyPI wheels. Cloud GPU must satisfy:
+#   torch.cuda.is_bf16_supported() is True
+#   torch.cuda.get_device_capability()[0] >= 8
+# Version rationale (plan W0.3):
+#   - torch 2.13.0+cu126 is the ONLY line shipping sm_61 SASS for local Pascal
+#     boxes (default PyPI wheels since 2.8.0 dropped sm_61). Cloud uses the same
+#     version from standard PyPI (Ampere+), different index, same pin.
+#   - transformers 5.14.1 is a BREAKING v5: load_in_4bit= removed,
+#     Trainer(tokenizer=) -> processing_class=, warmup_ratio removed,
+#     apply_chat_template returns BatchEncoding.
+#   - Triton floor CC 8.0 kills Unsloth/Liger; Axolotl pins torch>=2.11,<=2.12.1
+#     -> we do NOT use Unsloth/Liger/Axolotl; plain HF Trainer + PEFT.
+
+torch==2.13.0
+transformers==5.14.1
+peft==0.20.0
+trl==1.9.2
+accelerate==1.14.0
+datasets==5.0.1
+bitsandbytes==0.50.0
+safetensors==0.8.0
+einops
+scipy
+sentencepiece
+protobuf

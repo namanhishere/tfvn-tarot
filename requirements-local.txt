@@ -1,0 +1,21 @@
+# W0.3 — Local training environment (reproducible artifact).
+# Install: pip install -r requirements-local.txt
+# Uses the cu126 index for torch 2.13.0: the ONLY line whose wheels still ship
+# sm_61 SASS (required by the local Pascal P106-100, compute_cap 6.1).
+# Cloud GPU uses the identical pins from requirements-cloud.txt (standard PyPI).
+# Same versions, different index — diff the two files to confirm only index differs.
+
+--extra-index-url https://download.pytorch.org/whl/cu126
+
+torch==2.13.0
+transformers==5.14.1
+peft==0.20.0
+trl==1.9.2
+accelerate==1.14.0
+datasets==5.0.1
+bitsandbytes==0.50.0
+safetensors==0.8.0
+einops
+scipy
+sentencepiece
+protobuf
