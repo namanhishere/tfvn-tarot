@@ -11,6 +11,14 @@ __pycache__/
 .coverage
 htmlcov/
 
+# --- secrets: template is .env.example (tracked), real values never committed ---
+.env
+.env.*
+!.env.example
+
+# --- generation prompt-hash cache (W2.2 / W3) ---
+.cache/
+
 # --- model artifacts ---
 *.gguf
 artifacts/
