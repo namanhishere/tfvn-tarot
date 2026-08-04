@@ -21,7 +21,7 @@ BUILD_DIR="$LLAMA_CPP_DIR/build"
 CMAKE_VER="4.4.2"
 NINJA_VER="1.13.0"
 # Tiny public GGUF for the smoke tests (~90 MB Q4_K_M).
-SMOKE_MODEL_URL="${SMOKE_MODEL_URL:-https://huggingface.co/HuggingFaceTB/SmolLM2-135M-Instruct-GGUF/resolve/main/SmolLM2-135M-Instruct-Q4_K_M.gguf}"
+SMOKE_MODEL_URL="${SMOKE_MODEL_URL:-https://huggingface.co/bartowski/SmolLM2-135M-Instruct-GGUF/resolve/main/SmolLM2-135M-Instruct-Q4_K_M.gguf}"
 SMOKE_MODEL="${SMOKE_MODEL:-$HOME/.cache/tfvn/smokelm2-135m-q4.gguf}"
 SMOKE_OUT="${SMOKE_OUT:-/tmp/tfvn/smoke-q4_0.gguf}"
 JOBS="${JOBS:-$(nproc)}"
