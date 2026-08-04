@@ -95,7 +95,7 @@ if [ ! -f "$SMOKE_MODEL" ]; then
 fi
 
 log "smoke: llama-quantize q4_0 on the tiny GGUF"
-"$BIN/llama-quantize" "$SMOKE_MODEL" "$SMOKE_OUT" q4_0 >/dev/null
+"$BIN/llama-quantize" --allow-requantize "$SMOKE_MODEL" "$SMOKE_OUT" q4_0 >/dev/null
 [ -s "$SMOKE_OUT" ] || die "quantised output empty"
 
 log "smoke: llama-server single completion"
