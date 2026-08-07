@@ -10,8 +10,14 @@ Env keys (all optional; sensible defaults):
   LLM_BASE_URL        default https://llm.namanhishere.com/v1
   LLM_API_KEY         required for live calls; missing -> offline/dry-run mode
   LLM_MODEL           default deepseek-v4-flash
+  LLM_MODEL_SONNET    second-tier model for judge/critique calls (Wave 3 mix:
+                      Judge + critique on Sonnet, bulk generation on Haiku)
   LLM_TIMEOUT         per-request timeout in seconds (default 120)
   GEN_CACHE_DIR       cache dir for prompt-hash caching (default .cache/gen)
+
+Per-call model override: ``chat(..., model=...)`` / ``chat_json(..., model=...)``
+select a different model than the client default for that call (cache key
+includes the model, so the two tiers never collide).
 
 Usage::
 
@@ -95,6 +101,7 @@ class LLMClient:
         self.base_url = (base_url or _env("LLM_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
         self.api_key = api_key or _env("LLM_API_KEY") or None
         self.model = model or _env("LLM_MODEL") or DEFAULT_MODEL
+        self.model_sonnet = _env("LLM_MODEL_SONNET") or ""  # optional 2nd tier
         self.timeout = float(timeout if timeout is not None else _env("LLM_TIMEOUT", "120"))
         self.cache_dir = Path(cache_dir or _env("GEN_CACHE_DIR", ".cache/gen"))
         self.seed = seed if seed is not None else int(_env("GEN_SEED", "42") or "42")
@@ -146,11 +153,12 @@ class LLMClient:
     # ----------------------------------------------------------------- cache --
 
     def _cache_key(
-        self, messages: Sequence[Dict[str, str]], temperature: float, max_tokens: int
+        self, messages: Sequence[Dict[str, str]], temperature: float, max_tokens: int,
+        model: Optional[str] = None,
     ) -> str:
         blob = json.dumps(
             {
-                "model": self.model,
+                "model": model or self.model,
                 "messages": messages,
                 "temperature": round(float(temperature), 4),
                 "max_tokens": int(max_tokens),
@@ -203,6 +211,7 @@ class LLMClient:
         temperature: float = 0.7,
         json_object: bool = False,
         use_cache: bool = True,
+        model: Optional[str] = None,
     ) -> str:
         """One chat completion. Returns assistant content text.
 
@@ -210,6 +219,9 @@ class LLMClient:
         and appends a JSON-only instruction to the last user message; if the
         gateway rejects the response_format field (400), it retries without it
         (some proxies do not implement structured output).
+
+        ``model`` overrides the client default for this call only (used by the
+        Wave 3 mix: Judge/critique on Sonnet, bulk generation on Haiku).
         """
         msgs: List[Dict[str, str]] = []
         for i, m in enumerate(messages):
@@ -217,14 +229,14 @@ class LLMClient:
         if json_object and msgs and msgs[-1]["role"] == "user":
             msgs[-1] = {**msgs[-1], "content": msgs[-1]["content"] + "\n\n" + _JSON_SCHEMA_HINT}
 
-        key = self._cache_key(msgs, temperature, max_tokens)
+        key = self._cache_key(msgs, temperature, max_tokens, model=model)
         if use_cache:
             hit = self._cached(key)
             if hit is not None:
                 return hit
 
         payload: Dict[str, Any] = {
-            "model": self.model,
+            "model": model or self.model,
             "messages": msgs,
             "max_tokens": int(max_tokens),
             "temperature": float(temperature),
@@ -265,6 +277,7 @@ class LLMClient:
         max_tokens: int = 512,
         temperature: float = 0.7,
         use_cache: bool = True,
+        model: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Chat completion parsed as JSON. Falls back to extracting the first
         ``{...}`` object from the raw text if the model ignores the format hint."""
@@ -274,6 +287,7 @@ class LLMClient:
             temperature=temperature,
             json_object=True,
             use_cache=use_cache,
+            model=model,
         )
         try:
             return json.loads(raw)
