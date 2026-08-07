@@ -734,6 +734,8 @@ def run_w33(args: argparse.Namespace) -> int:
     memory = MemoryIndex(CACHE / "memory.jsonl")
     blacklist = SelfTighteningNGramBlacklist(profile_path=KB / "vn_register_profile.json")
     texts = [r["target_vi"] for r in rows if r.get("target_vi")]
+    # feed corpus so forbidden_phrases / never-fires reflect real usage
+    blacklist.update(texts)
     ablation = run_ablation(texts, memory, blacklist)
 
     main_texts = [
