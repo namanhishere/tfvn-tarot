@@ -1328,8 +1328,11 @@ def run_w35(args: argparse.Namespace) -> int:
     safety_pairs = {cat: sum(1 for c in m.values() if c >= 2) for cat, m in pairs_per_cat.items()}
     safety_ok = all(safety_pairs.get(cat, 0) >= 5 for cat in SAFETY_CATEGORIES)
 
+    # Hash the rows w36 actually ships (pre-dedup combined tiers): the dedup
+    # cascade above is analysis-only and never rewrites the tiers, so the
+    # fingerprint must cover the shipped set to be verifiable on checkout.
     canonical = "\n".join(
-        dumps_canonical(r) for r in sorted(kept, key=lambda r: r["example_id"])
+        dumps_canonical(r) for r in sorted(combined, key=lambda r: r["example_id"])
     )
     digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     (DATA_DIR / "DATASET_HASH.txt").write_text(digest + "\n", encoding="utf-8")
