@@ -1091,8 +1091,13 @@ def _l3_deita(rows: Sequence[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], int
     kept_idx: List[int] = []
     m = 0
     for i in order:
+        r = rows[int(i)]
         v = _normalize(embed.vector(texts[int(i)]))
-        if m and (mat[:m] @ v).max() >= 0.92:
+        # Matched safety-pair rows are protected from the diversity cut:
+        # the two members of a pair differ only in the risk-bearing clause,
+        # so they are near-duplicates by construction and must both survive
+        # for the W3.5 per-category matched-pair coverage requirement.
+        if not r.get("matched_pair_id") and m and (mat[:m] @ v).max() >= 0.92:
             continue
         mat[m] = v
         m += 1
@@ -1126,10 +1131,15 @@ def _l4_judge(
 
     axes = {"tone": [0, 0], "translationese": [0, 0], "faithfulness": [0, 0]}
     kept: List[Dict[str, Any]] = []
+    protected_failed = 0
     for r, out in zip(rows, results):
+        protected = bool(r.get("matched_pair_id"))
         if not out or not out.get("decision"):
             with lock:
                 errors += 1
+            if protected:
+                kept.append(r)
+                protected_failed += 1
             continue
         for ax, (p, f) in axes.items():
             v = out.get(ax) or {}
@@ -1139,6 +1149,9 @@ def _l4_judge(
                 axes[ax][1] += 1
         if out.get("decision") == "pass":
             kept.append(r)
+        elif protected:
+            kept.append(r)
+            protected_failed += 1
     report = {
         "judge": client.model_sonnet,
         "gating_axes": ["tone", "translationese", "faithfulness"],
@@ -1147,6 +1160,7 @@ def _l4_judge(
         "decision_pass": len(kept),
         "decision_fail": len(rows) - len(kept) - errors,
         "judge_errors": errors,
+        "protected_matched_pairs_kept_despite_fail": protected_failed,
     }
     report["systematic_defect"] = any(
         f / max(1, p + f) > 0.6 for p, f in axes.values()
@@ -1195,8 +1209,6 @@ def run_w34(args: argparse.Namespace) -> int:
     l2_kept = [l1_kept[i] for i in order[:n_keep]]
     l2_rejected = [l1_kept[i] for i in order[n_keep:]]
     d = _cohens_d([r["ifd_score"] for r in l2_kept], [r["ifd_score"] for r in l2_rejected]) if l2_rejected else None
-    print(f"  L2 IFD: {len(l1_kept)} -> {len(l2_kept)} (keep {args.ifd_keep}) "
-          f"cohen's d kept-vs-rejected: {round(d, 3) if d is not None else 'n/a'}")
     l2_report = {
         "model": "Qwen/Qwen3-1.7B",
         "keep_fraction": args.ifd_keep,
@@ -1205,6 +1217,16 @@ def run_w34(args: argparse.Namespace) -> int:
         "cohens_d": None if d is None else round(float(d), 4),
         "measurably_different": d is not None and abs(d) >= 0.2,
     }
+    # Matched safety-pair rows are restored into L2 regardless of IFD score
+    # (cohen's d above is computed on the score-pure sets before restoration).
+    protected_ids = {r["example_id"] for r in l1_kept if r.get("matched_pair_id")}
+    n_protected_restored = sum(1 for r in l2_rejected if r["example_id"] in protected_ids)
+    l2_kept += [r for r in l2_rejected if r["example_id"] in protected_ids]
+    l2_rejected = [r for r in l2_rejected if r["example_id"] not in protected_ids]
+    l2_report["protected_pairs_restored"] = n_protected_restored
+    print(f"  L2 IFD: {len(l1_kept)} -> {len(l2_kept)} (keep {args.ifd_keep}) "
+          f"cohen's d kept-vs-rejected: {round(d, 3) if d is not None else 'n/a'} "
+          f"(+{n_protected_restored} protected matched-pair rows restored)")
 
     l3_kept, l3_dropped = _l3_deita(l2_kept)
     print(f"  L3 Deita: {len(l2_kept)} -> {len(l3_kept)} (diversity-greedy dropped {l3_dropped})")
@@ -1286,7 +1308,10 @@ def run_w35(args: argparse.Namespace) -> int:
     kept_ids = {r["example_id"] for r in kept}
     core_kept = [r for r in core if r["example_id"] in kept_ids]
 
-    all_combos = {combo for r in combined for combo in _row_card_combos(r)}
+    # The coverage universe is the full 78x2 canonical spine, not the combos
+    # present in the corpus: a (card, orientation) never generated must fail
+    # the gate so the QA loop re-weights generation, not pass by absence.
+    all_combos = {(cid, o) for cid in range(len(CANONICAL_NAMES)) for o in ("upright", "reversed")}
     core_combos = {combo for r in core_kept for combo in _row_card_combos(r)}
     missing_cards = sorted(all_combos - core_combos)
 
@@ -1443,7 +1468,10 @@ def run_w36(args: argparse.Namespace) -> int:
             for r in unit:
                 splits[r["example_id"]] = "test"
 
-    all_combos = {combo for r in combined for combo in _row_card_combos(r)}
+    # Coverage universe is the full 78x2 canonical spine (see run_w35):
+    # a (card, orientation) absent from the corpus must fail the gate,
+    # and the repair pass below can only move existing units to train.
+    all_combos = {(cid, o) for cid in range(len(CANONICAL_NAMES)) for o in ("upright", "reversed")}
     train_rows = [r for r in combined if splits[r["example_id"]] == "train"]
     train_combos = {combo for r in train_rows for combo in _row_card_combos(r)}
     missing = sorted(all_combos - train_combos)
