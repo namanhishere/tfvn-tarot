@@ -32,3 +32,9 @@ artifacts/
 # --- runtime / session state (not pipeline artifacts) ---
 .omo/
 .codegraph
+
+# --- W3 raw generated output (bulk, regenerable) ---
+datasets/raw/
+
+# --- runtime logs (regenerable) ---
+logs/

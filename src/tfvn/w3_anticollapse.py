@@ -180,7 +180,9 @@ class SelfTighteningNGramBlacklist:
             return list(self._blacklist)
         top = max(counts.values())
         self._blacklist = [
-            g for g, c in counts.items() if c / top >= self.ratio_floor
+            g for g, c in counts.items()
+            if c / top >= self.ratio_floor
+            and not any(t in self.protected for t in g.split())
         ]
         return list(self._blacklist)
 
