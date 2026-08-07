@@ -1,0 +1,1 @@
+{"distinct2_200_sample":0.3051,"distinct2_per_100_windows":[0.3634,0.3832],"max_tokens":320,"model":"Qwen/Qwen3-1.7B","n":200,"output_file":"datasets/base_diversity_baseline.jsonl","prompt_source":"corpus main-loop question/card prompts (minimal prompt, no stack)","schema":"base_diversity_baseline","temperature":0.8}
