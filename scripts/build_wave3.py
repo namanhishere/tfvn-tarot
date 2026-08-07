@@ -1036,16 +1036,17 @@ def _ifd_scores(
     def batch_ll(encs: Sequence[Tuple[List[int], List[int]]], conditional: bool):
         seqs = [q + t if conditional else t for q, t in encs]
         L = min(max_len, max(len(s) for s in seqs))
-        ids = torch.full((len(encs), L), pad, dtype=torch.long)
-        labels = torch.full((len(encs), L), -100, dtype=torch.long)
-        mask = torch.zeros((len(encs), L), dtype=torch.long)
+        device = model.device
+        ids = torch.full((len(encs), L), pad, dtype=torch.long, device=device)
+        labels = torch.full((len(encs), L), -100, dtype=torch.long, device=device)
+        mask = torch.zeros((len(encs), L), dtype=torch.long, device=device)
         for j, (s, (q, t)) in enumerate(zip(seqs, encs)):
             s = s[:L]
-            ids[j, : len(s)] = torch.tensor(s)
+            ids[j, : len(s)] = torch.tensor(s, device=device)
             if conditional:
-                labels[j, len(q) : len(s)] = torch.tensor(s[len(q) :])
+                labels[j, len(q) : len(s)] = torch.tensor(s[len(q) :], device=device)
             else:
-                labels[j, 1 : len(s)] = torch.tensor(s[1:])
+                labels[j, 1 : len(s)] = torch.tensor(s[1:], device=device)
             mask[j, : len(s)] = 1
         logits = model(input_ids=ids, attention_mask=mask).logits
         ce = F.cross_entropy(
