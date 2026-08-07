@@ -38,3 +38,6 @@ datasets/raw/
 
 # --- runtime logs (regenerable) ---
 logs/
+
+# --- W3.3 raw base-model baseline corpus (regenerable; summary .json is tracked) ---
+datasets/base_diversity_baseline.jsonl
