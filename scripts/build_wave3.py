@@ -140,7 +140,7 @@ SAFETY_CATEGORIES: Dict[str, Dict[str, str]] = {
             "Bài trải bài này phù hợp với người từ 18 tuổi trở lên. Nếu bạn dưới 18 "
             "tuổi, hãy nhờ bố mẹ hoặc người giám hộ cùng tham gia."
         ),
-        "benign_clause": "",
+        "benign_clause": "Tôi 25 tuổi, xem bài tình duyên được không?",
         "risk_clause": "Tôi mới 15 tuổi nhưng tôi muốn xem bài được không?",
     },
     "benign_dark_card": {
@@ -403,63 +403,107 @@ def generate_safety_examples(
     *,
     model_sonnet: Optional[str],
     per_category: int = 2,
+    existing_rows: Sequence[Dict[str, Any]] = (),
 ) -> List[Dict[str, Any]]:
     """MATCHED safety pairs: same card/spread/position/topic, differing only in
-    the risk-bearing clause (plan W3.2 + policy/safety.md §3)."""
+    the risk-bearing clause (plan W3.2 + policy/safety.md §3).
+
+    Count-aware on resume: fills the shortfall to `per_category` COMPLETE
+    pairs per category. A partial pair (one member present) is completed with
+    the same card/spread/position as the surviving member, preserving the
+    matched-pair property; complete pairs are never regenerated.
+    """
+    have: Dict[Tuple[str, int], Dict[str, Dict[str, Any]]] = {}
+    for r in existing_rows:
+        if "safety_slice" not in (r.get("provenance") or []):
+            continue
+        pid = r.get("matched_pair_id") or ""
+        if not pid.startswith("safe_"):
+            continue
+        try:
+            pair_i = int(pid.rsplit("_", 1)[1])
+        except ValueError:
+            continue
+        cat = r.get("safety_category")
+        if cat in SAFETY_CATEGORIES:
+            have.setdefault((cat, pair_i), {})[r.get("matched_member")] = r
+
+    def member_row(
+        cat: str, spec: Dict[str, str], pair_id: str, pair_i: int,
+        member: str, clause: str, slot: int,
+    ) -> Optional[Dict[str, Any]]:
+        anchor = next(iter(have.get((cat, pair_i), {}).values()), None)
+        if anchor is not None:
+            cid, orient = anchor["card_ids"][0], anchor["orientations"][0]
+        else:
+            cid, orient = rng.choice(range(78)), ("upright" if rng.random() < 0.5 else "reversed")
+        row = lookup.get((cid, orient))
+        if row is None:
+            return None
+        spread = next((s for s in spreads if s["spread_id"] == "spread_single"), spreads[0])
+        glosses = [p.get("label_vi") or p.get("label_en") or "" for p in spread["positions"]]
+        msg = build_safety_reading_messages(
+            clause, [row], spread.get("name_vi") or spread["name_en"],
+            glosses, cat, spec["template"], slot,
+        )
+        data = _chat_json(client, msg, max_tokens=700, temperature=0.7)
+        if data is None:
+            return None
+        reading_vi = str(data.get("reading_vi") or "").strip()
+        if not reading_vi:
+            return None
+        return {
+            "example_id": f"w32_{slot:06d}",
+            "task_type": "safety",
+            "card_ids": [cid],
+            "orientations": [orient],
+            "spread_id": spread["spread_id"],
+            "spread_name_vi": spread.get("name_vi") or spread["name_en"],
+            "position_glosses": glosses,
+            "querent_context": cat,
+            "register": "warm",
+            "length_band": "ngắn",
+            "question_vi": clause,
+            "reading_vi": reading_vi,
+            "target_vi": reading_vi,
+            "cards_used": [
+                {"card_id": row["card_id"], "name_en": row["name_en"],
+                 "orientation": row["orientation"], "polarity_axis": row.get("polarity_axis")}
+            ],
+            "critique_applied": False,
+            "safety_category": cat,
+            "matched_pair_id": pair_id,
+            "matched_member": member,
+            "grounding_defect": None,
+            "wrong_claim": None,
+            "provenance": ["w32_generated", "safety_slice"],
+            "prompt_slot": slot,
+        }
+
     out: List[Dict[str, Any]] = []
     slot = slot_start
     for cat, spec in SAFETY_CATEGORIES.items():
+        complete = 0
         for pair_i in range(per_category):
-            cid = rng.choice(range(78))
-            orient = "upright" if rng.random() < 0.5 else "reversed"
-            row = lookup.get((cid, orient))
-            if row is None:
+            members = have.setdefault((cat, pair_i), {})
+            if members.get("benign") and members.get("risk"):
+                complete += 1
                 continue
-            spread = next((s for s in spreads if s["spread_id"] == "spread_single"), spreads[0])
-            glosses = [p.get("label_vi") or p.get("label_en") or "" for p in spread["positions"]]
+            pair_id = f"safe_{cat}_{pair_i}"
             for member, clause in (("benign", spec["benign_clause"]), ("risk", spec["risk_clause"])):
-                if not clause:
+                if member in members or not clause:
                     continue
-                question_vi = clause
-                msg = build_safety_reading_messages(
-                    question_vi, [row], spread.get("name_vi") or spread["name_en"],
-                    glosses, cat, spec["template"], slot,
-                )
-                data = _chat_json(client, msg, max_tokens=700, temperature=0.7)
-                if data is None:
+                row = member_row(cat, spec, pair_id, pair_i, member, clause, slot)
+                if row is None:
                     continue
-                reading_vi = str(data.get("reading_vi") or "").strip()
-                if not reading_vi:
-                    continue
-                pair_id = f"safe_{cat}_{pair_i}"
-                out.append({
-                    "example_id": f"w32_{slot:06d}",
-                    "task_type": "safety",
-                    "card_ids": [cid],
-                    "orientations": [orient],
-                    "spread_id": spread["spread_id"],
-                    "spread_name_vi": spread.get("name_vi") or spread["name_en"],
-                    "position_glosses": glosses,
-                    "querent_context": cat,
-                    "register": "warm",
-                    "length_band": "ngắn",
-                    "question_vi": question_vi,
-                    "reading_vi": reading_vi,
-                    "target_vi": reading_vi,
-                    "cards_used": [
-                        {"card_id": row["card_id"], "name_en": row["name_en"],
-                         "orientation": row["orientation"], "polarity_axis": row.get("polarity_axis")}
-                    ],
-                    "critique_applied": False,
-                    "safety_category": cat,
-                    "matched_pair_id": pair_id,
-                    "matched_member": member,
-                    "grounding_defect": None,
-                    "wrong_claim": None,
-                    "provenance": ["w32_generated", "safety_slice"],
-                    "prompt_slot": slot,
-                })
+                members[member] = row
+                out.append(row)
                 slot += 1
+            if members.get("benign") and members.get("risk"):
+                complete += 1
+        if complete < per_category:
+            print(f"  [warn] safety {cat}: only {complete}/{per_category} complete pairs "
+                  f"(API failures)", file=sys.stderr)
     return out
 
 
@@ -472,7 +516,14 @@ def generate_grounding_examples(
     exemplars: Sequence[str],
     slot_start: int,
     n: int = 6,
+    existing_rows: Sequence[Dict[str, Any]] = (),
 ) -> List[Dict[str, Any]]:
+    """Grounding-negative slice. Count-aware on resume: generates only the
+    shortfall to `n` (existing grounding rows are never regenerated)."""
+    existing_n = sum(
+        1 for r in existing_rows if "grounding_negative" in (r.get("provenance") or [])
+    )
+    n = max(0, n - existing_n)
     out: List[Dict[str, Any]] = []
     slot = slot_start
     for i in range(n):
@@ -537,10 +588,19 @@ def generate_correction_examples(
     spreads: Sequence[Dict[str, Any]],
     exemplars: Sequence[str],
     slot_start: int,
+    existing_rows: Sequence[Dict[str, Any]] = (),
 ) -> List[Dict[str, Any]]:
+    """Counter-sycophancy slice. Count-aware on resume: skips wrong_claims
+    already present in the corpus (deterministic per claim)."""
+    present = {
+        r.get("wrong_claim") for r in existing_rows
+        if "counter_sycophancy" in (r.get("provenance") or [])
+    }
     out: List[Dict[str, Any]] = []
     slot = slot_start
     for name_en, orient, wrong in WRONG_CLAIMS:
+        if wrong in present:
+            continue
         row = next((r for r in cards if r["name_en"] == name_en and r["orientation"] == orient), None)
         if row is None:
             continue
@@ -674,39 +734,29 @@ def run_w32(args: argparse.Namespace) -> int:
     slot = max((int(e["prompt_slot"]) for e in rows), default=slot)
     write_jsonl(out_path, rows)
 
-    # Special slices. Idempotent on resume: skip a slice family whose provenance
-    # tag is already present (matched pairs must never duplicate across runs).
+    # Special slices, count-aware on resume: each generator fills its own
+    # shortfall against `rows` (matched pairs are never duplicated).
     base_slot = slot
     new_rows: List[Dict[str, Any]] = []
-    has_safety = any("safety_slice" in (r.get("provenance") or []) for r in rows)
-    has_grounding = any("grounding_negative" in (r.get("provenance") or []) for r in rows)
-    has_correction = any("counter_sycophancy" in (r.get("provenance") or []) for r in rows)
-    if not has_safety:
-        safety_rows = generate_safety_examples(
-            client, random.Random(args.seed + base_slot), cards, lookup, spreads, base_slot + 1,
-            model_sonnet=model_sonnet, per_category=safety_n,
-        )
-        base_slot += len(safety_rows)
-        new_rows.extend(safety_rows)
-    else:
-        print("  safety slice already present — skipping (resume)")
-    if not has_grounding:
-        grounding_rows = generate_grounding_examples(
-            client, random.Random(args.seed + base_slot), cards, lookup, spreads, exemplars,
-            base_slot + 1, n=grounding_n,
-        )
-        base_slot += len(grounding_rows)
-        new_rows.extend(grounding_rows)
-    else:
-        print("  grounding slice already present — skipping (resume)")
-    if not has_correction:
-        correction_rows = generate_correction_examples(
-            client, random.Random(args.seed + base_slot), cards, lookup, spreads, exemplars,
-            base_slot + 1,
-        )
-        new_rows.extend(correction_rows)
-    else:
-        print("  correction slice already present — skipping (resume)")
+    safety_rows = generate_safety_examples(
+        client, random.Random(args.seed + base_slot), cards, lookup, spreads, base_slot + 1,
+        model_sonnet=model_sonnet, per_category=safety_n, existing_rows=rows,
+    )
+    base_slot += len(safety_rows)
+    new_rows.extend(safety_rows)
+    grounding_rows = generate_grounding_examples(
+        client, random.Random(args.seed + base_slot), cards, lookup, spreads, exemplars,
+        base_slot + 1, n=grounding_n, existing_rows=rows,
+    )
+    base_slot += len(grounding_rows)
+    new_rows.extend(grounding_rows)
+    correction_rows = generate_correction_examples(
+        client, random.Random(args.seed + base_slot), cards, lookup, spreads, exemplars,
+        base_slot + 1, existing_rows=rows,
+    )
+    new_rows.extend(correction_rows)
+    print(f"  slices: +{len(safety_rows)} safety, +{len(grounding_rows)} grounding, "
+          f"+{len(correction_rows)} correction")
 
     rows = rows + new_rows
     write_jsonl(out_path, rows)
