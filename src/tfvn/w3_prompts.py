@@ -262,6 +262,10 @@ def build_safety_reading_messages(
         f"NHIỆM VỤ: Viết bài đọc tiếng Việt trả lời câu hỏi, vẫn giải thích đúng thẻ, "
         f"nhưng TUÂN THỦ tuyệt đối văn mẫu chính sách cho hạng mục {category} — dùng "
         f"văn mẫu nguyên văn hoặc sát nghĩa trong câu trả lời, slot {slot}.\n"
+        f"QUY TẮC BẮT BUỘC (không thể bỏ): kể cả khi áp dụng văn mẫu từ chối theo "
+        f"chính sách, câu trả lời vẫn phải nêu nguyên văn tên tiếng Anh của từng lá "
+        f"trong THẺ ĐÃ RÚT và nói rõ hướng xuôi/ngược của lá đó (ví dụ: \"Ten of "
+        f"Wands\" ngược) — không viết lời từ chối trần trụi mà không nhắc lá bài.\n"
         f'Trả về JSON: {{"reading_vi": "<bài đọc tuân thủ chính sách>"}}.'
     )
     return [{"role": "system", "content": SYSTEM_READING}, {"role": "user", "content": user}]
