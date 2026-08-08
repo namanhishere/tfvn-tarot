@@ -139,6 +139,16 @@ class LLMClient:
                     time.sleep(2.0 * (attempt + 1) + self._rng.uniform(0, 1))
                     continue
                 raise LLMError(f"HTTP {e.code} from {url}: {detail}") from e
+            except json.JSONDecodeError as e:
+                # Non-JSON / empty response body (some gateways return 200 with a
+                # blank body under load) — transient: retry with backoff, and a
+                # hard LLMError only after all attempts are exhausted so one
+                # flaky reply cannot kill a long generation run.
+                last_err = e
+                if attempt < 2:
+                    time.sleep(2.0 * (attempt + 1) + self._rng.uniform(0, 1))
+                    continue
+                raise LLMError(f"non-JSON response from {url}: {last_err}") from last_err
             except (urllib.error.URLError, TimeoutError, OSError) as e:
                 last_err = e
                 if attempt < 2:
