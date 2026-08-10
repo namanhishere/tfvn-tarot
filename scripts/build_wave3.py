@@ -176,6 +176,29 @@ CONTEXTS = [
     ("spiritual", "phát triển tâm linh"),
     ("decision", "quyết định và hướng đi"),
 ]
+
+# Domain coupling: a spread's position grid encodes a domain, so contexts
+# outside it (money question on a love-triangle spread) yield broken readings.
+SPREAD_CONTEXT_ALLOW: Dict[str, Sequence[str]] = {
+    "spread_relationship1": ("love",),
+    "spread_relationship2": ("love",),
+    "spread_relationship3": ("love",),
+    "spread_decision": ("decision",),
+}
+_GENERIC_CONTEXTS = tuple(c for c, _ in CONTEXTS)
+
+
+def spread_allowed_contexts(spread_id: str) -> Sequence[str]:
+    """Querent-context ids compatible with a spread's domain (all for generic)."""
+    return SPREAD_CONTEXT_ALLOW.get(spread_id, _GENERIC_CONTEXTS)
+
+
+def sample_context(rng: random.Random, spread_id: str) -> Tuple[str, str]:
+    """Draw a (context id, Vietnamese label) compatible with the spread's domain."""
+    allowed = set(spread_allowed_contexts(spread_id))
+    return rng.choice([c for c in CONTEXTS if c[0] in allowed])
+
+
 REGISTERS = ["formal", "warm", "casual"]
 LENGTH_BANDS = ["ngắn", "đầy_đủ"]
 INTERACTIONS = ["explanation", "reading", "followup", "refusal", "correction"]
@@ -290,7 +313,7 @@ def generate_example(
     prompt hash; ``slot`` rotates the prompt so re-draws miss the cache.
     """
     spread, ids, orientations = plan_draw(rng, spreads, profile, card_weights)
-    ctx_id, ctx_vi = rng.choice(CONTEXTS)
+    ctx_id, ctx_vi = sample_context(rng, spread["spread_id"])
     register = rng.choice(REGISTERS)
     length_band = rng.choice(LENGTH_BANDS)
     interaction = rng.choice(INTERACTIONS[:2])  # explanation/reading core
@@ -671,12 +694,15 @@ def run_w32(args: argparse.Namespace) -> int:
                         json.loads((KB / "card_name_whitelist.json").read_text("utf-8"))["canonical_names"]
                     )}
 
-    out_path = RAW_DIR / "generated.jsonl"
+    out_path = Path(args.output) if args.output else (RAW_DIR / "generated.jsonl")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     existing = read_jsonl(out_path) if out_path.exists() else []
     seen_ids = {e["example_id"] for e in existing}
     slot = max((int(e["prompt_slot"]) for e in existing), default=0) + 1
 
-    memory = MemoryIndex(CACHE / "memory.jsonl")
+    cache_dir = Path(args.cache_dir) if args.cache_dir else CACHE
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    memory = MemoryIndex(cache_dir / "memory.jsonl")
     blacklist = SelfTighteningNGramBlacklist(
         profile_path=KB / "vn_register_profile.json"
     )
@@ -924,6 +950,9 @@ def _l1_check(row: Dict[str, Any]) -> Tuple[bool, List[str], List[str]]:
         reasons.append("schema:length_band")
     if row.get("register") not in L1_REGISTERS:
         reasons.append("schema:register")
+    if (row.get("spread_id") in SPREAD_CONTEXT_ALLOW
+            and row.get("querent_context") not in SPREAD_CONTEXT_ALLOW[row["spread_id"]]):
+        reasons.append("spread_context_mismatch")
     if isinstance(row.get("orientations"), list) and isinstance(row.get("cards_used"), list):
         if len(row["orientations"]) != len(row["cards_used"]):
             reasons.append("schema:orientation_count")
@@ -1541,6 +1570,12 @@ def main() -> int:
                      help="fraction of readings getting critique-and-revise (default 0.5)")
     p32.add_argument("--safety-pairs", type=int, default=2, help="pairs per safety category")
     p32.add_argument("--grounding", type=int, default=6, help="grounding negatives")
+    p32.add_argument("--output", type=str, default="",
+                     help="output jsonl path (default: datasets/raw/generated.jsonl); "
+                          "use a separate path for a parallel/independent run")
+    p32.add_argument("--cache-dir", type=str, default="",
+                     help="anti-collapse state dir (default: .cache/w3); use a separate "
+                          "dir with --output so parallel runs never share the memory index")
     p32.set_defaults(fn=run_w32)
     p33 = sub.add_parser("w33", help="anti-collapse ablation + diversity")
     p33.add_argument("--seed", type=int, default=42)
