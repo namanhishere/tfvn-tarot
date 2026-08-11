@@ -1,0 +1,7 @@
+# Web app runtime deps (tfvn.webapp, scripts/serve_webapp.py).
+# Install: pip install -r requirements-web.txt
+# Local-only tool bound to 127.0.0.1; no cloud/GPU deps here (see
+# requirements-local.txt / requirements-cloud.txt for training).
+
+fastapi>=0.115
+uvicorn>=0.30
