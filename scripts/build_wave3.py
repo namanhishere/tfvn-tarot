@@ -1231,7 +1231,21 @@ def run_w34(args: argparse.Namespace) -> int:
 
     model_path = Path(args.ifd_model) if args.ifd_model else _student_model_path()
     print(f"  L2 IFD model: {model_path.name}")
-    scores = _ifd_scores(l1_kept, model_path, batch_size=args.ifd_batch)
+    # Optional resume: reuse saved ifd scores for unchanged rows (identified by
+    # example_id) so a corpus growth re-run only scores the newly added rows.
+    score_map: Dict[str, float] = {}
+    if getattr(args, "ifd_score_map", ""):
+        for line in Path(args.ifd_score_map).read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            rec = json.loads(line)
+            score_map[rec["example_id"]] = float(rec["ifd_score"])
+        print(f"  IFD score map: {len(score_map)} rows reused, "
+              f"{len(l1_kept) - len(score_map)} to score")
+    missing = [r for r in l1_kept if r["example_id"] not in score_map]
+    new_scores = iter(_ifd_scores(missing, model_path, batch_size=args.ifd_batch))
+    scores = [score_map[r["example_id"]] if r["example_id"] in score_map
+              else next(new_scores) for r in l1_kept]
     for r, s in zip(l1_kept, scores):
         r["ifd_score"] = round(float(s), 4)
     order = sorted(range(len(l1_kept)), key=lambda i: (-l1_kept[i]["ifd_score"], l1_kept[i]["example_id"]))
@@ -1587,6 +1601,8 @@ def main() -> int:
     p34.add_argument("--seed", type=int, default=42)
     p34.add_argument("--ifd-model", type=str, default="",
                      help="student base model path (default: HF cache Qwen3-1.7B)")
+    p34.add_argument("--ifd-score-map", type=str, default="",
+                     help="jsonl of {example_id, ifd_score} to reuse instead of re-scoring")
     p34.add_argument("--ifd-batch", type=int, default=4)
     p34.add_argument("--skip-l4", action="store_true", help="stop after L3 (debug)")
     p34.set_defaults(fn=run_w34)
