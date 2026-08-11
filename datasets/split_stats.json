@@ -1,0 +1,1 @@
+{"acceptance":{"anchors_isolated":true,"every_card_orientation_in_train":true,"no_overlap":true,"test_covers_all_task_types":true,"test_ge_500":true},"anchor_file":"datasets/anchor/anchor_readings.jsonl","schema":"w36_splits","sizes":{"test":950,"train":11535,"val":1086},"test_task_types":["correction","explanation","grounding","reading","safety"]}
