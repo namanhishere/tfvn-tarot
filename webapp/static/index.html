@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>tfvn-tarot — dataset viewer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/dashboard">tfvn-tarot<span class="brand-sub">dataset viewer</span></a>
+    <nav id="nav" aria-label="Primary">
+      <a href="#/dashboard" data-route="dashboard">Dashboard</a>
+      <a href="#/cards" data-route="cards">Cards</a>
+      <a href="#/dataset" data-route="dataset">Dataset</a>
+      <a href="#/raw" data-route="raw">Raw</a>
+      <a href="#/stats" data-route="stats">Stats</a>
+      <a href="#/reports" data-route="reports">Reports</a>
+      <a href="#/runs" data-route="runs">Runs</a>
+    </nav>
+  </header>
+
+  <main id="view" tabindex="-1"></main>
+
+  <div id="toast-root" aria-live="polite"></div>
+
+  <noscript>
+    <p class="noscript">This tool needs JavaScript enabled (hash router + fetch API).</p>
+  </noscript>
+
+  <script src="app.js"></script>
+</body>
+</html>
