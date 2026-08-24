@@ -1,0 +1,73 @@
+{
+  "provider": "llama-server",
+  "seed": 42,
+  "n_cases": 6,
+  "overall_pass_rate": 0.16666666666666666,
+  "by_stratum": {
+    "single": {
+      "total": 2,
+      "passed": 0,
+      "pass_rate": 0.0
+    },
+    "three": {
+      "total": 2,
+      "passed": 1,
+      "pass_rate": 0.5
+    },
+    "ten": {
+      "total": 2,
+      "passed": 0,
+      "pass_rate": 0.0
+    }
+  },
+  "results": [
+    {
+      "case_id": "single_000",
+      "stratum": "single",
+      "passed": false,
+      "failures": [
+        "missing_positions=['hiện tại']"
+      ]
+    },
+    {
+      "case_id": "single_001",
+      "stratum": "single",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['King of Wands']"
+      ]
+    },
+    {
+      "case_id": "three_000",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_001",
+      "stratum": "three",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Knight of Pentacles', 'Five of Swords', 'The Emperor']",
+        "missing_positions=['hiện tại']"
+      ]
+    },
+    {
+      "case_id": "ten_000",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "missing_positions=['hy vọng và nỗi sợ']"
+      ]
+    },
+    {
+      "case_id": "ten_001",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Eight of Swords', 'Knight of Pentacles', 'King of Wands', 'The Fool', 'Judgement', 'Five of Swords', 'Eight of Cups', 'The Sun', 'Six of Wands', 'Eight of Cups']",
+        "missing_positions=['hiện tại', 'thách thức', 'quá khứ', 'tương lai', 'trên đầu', 'bên dưới', 'lời khuyên', 'môi trường', 'hy vọng và nỗi sợ', 'kết quả']"
+      ]
+    }
+  ]
+}

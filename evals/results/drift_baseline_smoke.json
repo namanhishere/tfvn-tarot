@@ -1,0 +1,72 @@
+{
+  "provider": "llama-server",
+  "n_generations": 8,
+  "max_tokens": 700,
+  "collapse_threshold": 0.5,
+  "whitelist_sha256": "59f6acb66269af1bfcb94451fb6b5166032407f251d09eba012e22e3cb89aacc",
+  "aggregate": {
+    "mean_vi_frac": 0.5710245944740155,
+    "collapse_rate": 0.0,
+    "mean_tokens": 106.125
+  },
+  "per_generation": [
+    {
+      "n_tokens": 136,
+      "mean_vi_frac": 0.9325842696629213,
+      "collapses": 0,
+      "windows": [
+        0.9325842696629213
+      ]
+    },
+    {
+      "n_tokens": 158,
+      "mean_vi_frac": 0.9444444444444444,
+      "collapses": 0,
+      "windows": [
+        0.9444444444444444
+      ]
+    },
+    {
+      "n_tokens": 48,
+      "mean_vi_frac": 0.0,
+      "collapses": 0,
+      "windows": []
+    },
+    {
+      "n_tokens": 114,
+      "mean_vi_frac": 0.8775510204081632,
+      "collapses": 0,
+      "windows": [
+        0.8775510204081632
+      ]
+    },
+    {
+      "n_tokens": 107,
+      "mean_vi_frac": 0.92,
+      "collapses": 0,
+      "windows": [
+        0.92
+      ]
+    },
+    {
+      "n_tokens": 78,
+      "mean_vi_frac": 0.0,
+      "collapses": 0,
+      "windows": []
+    },
+    {
+      "n_tokens": 128,
+      "mean_vi_frac": 0.8936170212765957,
+      "collapses": 0,
+      "windows": [
+        0.8936170212765957
+      ]
+    },
+    {
+      "n_tokens": 80,
+      "mean_vi_frac": 0.0,
+      "collapses": 0,
+      "windows": []
+    }
+  ]
+}
