@@ -22,7 +22,7 @@ detect_physical_cores() {
 }
 
 THREADS="${TAROT_THREADS:-$(detect_physical_cores)}"
-THREADS_PREFILL="${TAROT_THREADS_PREFILL:$THREADS}"
+THREADS_PREFILL="${TAROT_THREADS_PREFILL:-$THREADS}"
 
 echo "[serve.sh] model=$MODEL host=$HOST port=$PORT ctx=$CTX threads=$THREADS prefill=$THREADS_PREFILL"
 

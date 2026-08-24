@@ -32,7 +32,7 @@ from fastapi import FastAPI  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 
 from policy.crisis_routing import route_crisis  # noqa: E402
-from tfvn.reading import N_CTX, assemble_prompt, truncate_history  # noqa: E402
+from tfvn.reading import N_CTX, assemble_messages, truncate_history  # noqa: E402
 from tfvn.tools import ClarificationManager, Deck, ToolBox  # noqa: E402
 from tfvn.validators import (  # noqa: E402
     load_whitelist,
@@ -71,18 +71,17 @@ class ReadingRequest(BaseModel):
     n_cards: int = 3
 
 
-def _llama_generate(prompt: str, *, max_tokens: int = 700,
+def _llama_generate(messages: List[dict], *, max_tokens: int = 700,
                     temperature: float = 0.7) -> str:
-    body = {"prompt": prompt, "max_tokens": max_tokens,
+    body = {"messages": messages, "max_tokens": max_tokens,
             "temperature": temperature}
     req = urllib.request.Request(
-        LLAMA_SERVER.rstrip("/") + "/completion",
+        LLAMA_SERVER.rstrip("/") + "/v1/chat/completions",
         data=json.dumps(body).encode("utf-8"),
         headers={"Content-Type": "application/json"}, method="POST")
     with urllib.request.urlopen(req, timeout=300) as resp:
         data = json.loads(resp.read().decode("utf-8"))
-    return data.get("content", "")
-
+    return data["choices"][0]["message"]["content"]
 
 def _validate(output: str, draw: List[dict],
               positions: List[str]) -> Dict[str, Any]:
@@ -107,20 +106,22 @@ def _validate(output: str, draw: List[dict],
     return {"ok": not failures, "failures": failures}
 
 
-def generate_validated(prompt: str, draw: List[dict],
+def generate_validated(messages: List[dict], draw: List[dict],
                        positions: List[str]) -> Dict[str, Any]:
     """generate -> validators -> ONE constrained regeneration -> warning flag."""
-    output = _llama_generate(prompt)
+    output = _llama_generate(messages)
     check = _validate(output, draw, positions)
     if check["ok"]:
         return {"output": output, "validation_warning": False,
                 "regenerated": False, "failures": []}
 
-    constraint = (
-        prompt + "\n\nRÀNG BUỘC (đọc lại cho đúng): "
-        + "; ".join(check["failures"])
-        + ". CHỈ nói về các lá đã rút và đúng trạng thái.")
-    output2 = _llama_generate(constraint)
+    constraint = ("RÀNG BUỘC (đọc lại cho đúng): "
+                  + "; ".join(check["failures"])
+                  + ". CHỈ nói về các lá đã rút và đúng trạng thái.")
+    retry = messages[:-1] + [
+        {"role": "user",
+         "content": messages[-1]["content"] + "\n" + constraint}]
+    output2 = _llama_generate(retry)
     check2 = _validate(output2, draw, positions)
     if check2["ok"]:
         return {"output": output2, "validation_warning": False,
@@ -173,10 +174,8 @@ def reading(req: ReadingRequest) -> dict:
                             {"n": min(max(1, req.n_cards), 10),
                              "seed": req.seed})
     cards = draw["cards"]
-    positions = [f"vị trí {i + 1}" for i in range(len(cards))]
-
-    prompt = assemble_prompt(req.question_vi, cards, positions)
-    result = generate_validated(prompt, cards, positions)
+    messages = assemble_messages(req.question_vi, cards, positions)
+    result = generate_validated(messages, cards, positions)
     return {
         "question_vi": req.question_vi,
         "seed": req.seed,

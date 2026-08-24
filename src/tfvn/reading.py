@@ -64,6 +64,26 @@ def card_block(draw: Sequence[dict], compact: Optional[Dict[tuple, dict]] = None
     return "BÀI ĐÃ RÚT:\n" + "\n".join(lines)
 
 
+def assemble_messages(question: str, draw: Sequence[dict],
+                      positions: Sequence[str],
+                      compact: Optional[Dict[tuple, dict]] = None) -> List[dict]:
+    """Chat-message form of the same content — matches train_sft.py's
+    format_example() so serving distribution == training distribution.
+    The stable prefix (system + card block + positions) stays byte-identical
+    for a given draw; only the final user turn varies."""
+    from tfvn.w3_prompts import SYSTEM_READING
+
+    cards = "\n".join(
+        dumps_canonical({"card_id": d["card_id"], "name_en": d["name_en"],
+                         "orientation": d["orientation"]})
+        for d in draw)
+    pos = "\n".join(f"- {i + 1}. {p}" for i, p in enumerate(positions))
+    user = ("BÀI ĐÃ RÚT:\n" + cards +
+            ("\nCÁC VỊ TRÍ:\n" + pos if positions else "") +
+            "\nCÂU HỎI: " + question.strip())
+    return [{"role": "system", "content": SYSTEM_READING},
+            {"role": "user", "content": user}]
+
 def position_block(positions: Sequence[str]) -> str:
     return "CÁC VỊ TRÍ:\n" + "\n".join(f"- {i + 1}. {p}"
                                        for i, p in enumerate(positions))
