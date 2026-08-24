@@ -54,9 +54,9 @@ def build_quants(f16: Path, imatrix: Path | None, out_dir: Path,
             cmd = [str(quantize)]
             if imatrix:
                 cmd += ["--imatrix", str(imatrix)]
-            cmd += [str(f16), str(out), qt,
-                    "--output-tensor-type", "Q8_0",
-                    "--token-embd-type", "Q6_K"]
+            cmd += ["--output-tensor-type", "Q8_0",
+                    "--token-embedding-type", "Q6_K",
+                    str(f16), str(out), qt]
             print("running:", " ".join(cmd))
             subprocess.run(cmd, check=True)
         results[tag] = {"path": str(out), "quant_type": qt,

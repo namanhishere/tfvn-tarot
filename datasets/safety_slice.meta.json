@@ -1,0 +1,9 @@
+{
+  "rows": 1093,
+  "safety": 36,
+  "grounding": 1057,
+  "from_train_only": true,
+  "leak_check": {
+    "in_val_or_test": 0
+  }
+}
