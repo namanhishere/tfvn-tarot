@@ -174,6 +174,7 @@ def reading(req: ReadingRequest) -> dict:
                             {"n": min(max(1, req.n_cards), 10),
                              "seed": req.seed})
     cards = draw["cards"]
+    positions = [f"vị trí {i + 1}" for i in range(len(cards))]
     messages = assemble_messages(req.question_vi, cards, positions)
     result = generate_validated(messages, cards, positions)
     return {
