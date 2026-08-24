@@ -29,8 +29,26 @@ def _project_root() -> Path:
 
 
 def load_whitelist(path: Optional[Path] = None) -> dict:
+    """Load the card-name whitelist, merging any registered deck extensions.
+
+    Extensions live in ``kb/decks/*.json`` as ``{"deck": NAME,
+    "canonical_names": [...]}``. Any real (or synthetic conformance) deck
+    registers through this same path — no code changes required (plan W7.5).
+    """
     path = path or (_project_root() / "kb/card_name_whitelist.json")
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    wl = json.loads(Path(path).read_text(encoding="utf-8"))
+    decks_dir = _project_root() / "kb" / "decks"
+    if decks_dir.is_dir():
+        names = list(wl.get("canonical_names") or CANONICAL_NAMES)
+        for ext in sorted(decks_dir.glob("*.json")):
+            data = json.loads(ext.read_text(encoding="utf-8"))
+            for n in data.get("canonical_names") or []:
+                if n not in names:
+                    names.append(n)
+        wl["canonical_names"] = names
+        wl.setdefault("extensions", []).extend(
+            sorted(p.name for p in decks_dir.glob("*.json")))
+    return wl
 
 
 def _all_name_patterns(whitelist: Optional[dict] = None) -> List[tuple]:
@@ -128,6 +146,9 @@ def validate_card_name_containment(
             continue
         except KeyError:
             pass
+        # skip names registered by deck extensions (plan W7.5 extensibility)
+        if candidate in allowed:
+            continue
         # skip common English phrases
         if candidate.lower() in {
             "the past",
