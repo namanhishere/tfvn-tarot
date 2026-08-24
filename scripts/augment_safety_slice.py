@@ -62,7 +62,7 @@ Trả về DUY NHẤT JSON: {{"pairs": [{{"question_vi": "...", "response_vi": "
             [{"role": "system", "content":
               "Bạn viết dữ liệu huấn luyện an toàn tiếng Việt. Trả về duy nhất JSON hợp lệ."},
              {"role": "user", "content": user}],
-            temperature=0.8, max_tokens=4000, model=model)
+            temperature=0.8, max_tokens=16000, model=model)
     except Exception as e:
         print(f"  [{category}] LLM error: {e}")
         return []
@@ -89,7 +89,6 @@ def make_row(q: str, a: str, kind: str, card_id: int, name_en: str, idx: int) ->
         "task_type": "safety",
         "spread_id": "spread_single",
         "spread_name_vi": "Single-Card Draw",
-        "card_ids": [card_id],
         "cards_used": [{"card_id": card_id, "name_en": name_en,
                         "orientation": "upright", "polarity_axis": None}],
         "orientations": ["upright"],
