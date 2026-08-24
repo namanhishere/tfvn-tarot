@@ -108,8 +108,9 @@ def pick_dtype() -> str:
 
 
 def build_tokenized(rows, tokenizer, seq_len):
-    """Tokenize with completions-only loss: prompt span masked to -100."""
-    out_ids, out_labels = [], []
+    """Tokenize with completions-only loss: prompt span masked to -100.
+    Returns one {'input_ids': [...], 'labels': [...]} dict per input row."""
+    out = []
     for msgs in rows:
         prefix = tokenizer.apply_chat_template(
             msgs[:2], tokenize=False, add_generation_prompt=True)
@@ -122,12 +123,10 @@ def build_tokenized(rows, tokenizer, seq_len):
         ids = f_ids[:seq_len]
         labels = labels[:seq_len]
         pad = seq_len - len(ids)
-        attention = [1] * len(ids) + [0] * pad
         ids = ids + [tokenizer.pad_token_id or 0] * pad
         labels = labels + [-100] * pad
-        out_ids.append(ids)
-        out_labels.append(labels)
-    return {"input_ids": out_ids, "labels": out_labels}
+        out.append({"input_ids": ids, "labels": labels})
+    return out
 
 
 class OrientationTripwire:
@@ -239,6 +238,9 @@ def main() -> int:
         args.max_examples = 8
         args.no_tripwire = True
 
+    grad_accum = (args.grad_accum or max(1, args.effective_batch // args.micro_batch))
+    dtype = pick_dtype()
+
     tok_kwargs = {}
     tokenizer = AutoTokenizer.from_pretrained(args.model, **tok_kwargs)
     if tokenizer.pad_token is None:
@@ -287,7 +289,6 @@ def main() -> int:
         lr_scheduler_type="cosine_with_min_lr",
         lr_scheduler_kwargs={"min_lr_rate": 0.01},
         warmup_steps=max(1, int(0.03 * steps_per_epoch * args.epochs)),
-        logging_steps=max(1, steps_per_epoch // 20),
         eval_strategy="steps",
         eval_steps=eval_steps,
         save_strategy="steps",
@@ -295,7 +296,6 @@ def main() -> int:
         save_total_limit=6,
         bf16=dtype == "bf16",
         fp16=dtype == "fp16",
-        group_by_length=False,
         report_to=[],
         seed=args.seed,
         data_seed=args.seed,
@@ -344,6 +344,9 @@ def main() -> int:
     trainer.save_model(final_dir)
     tokenizer.save_pretrained(final_dir)
 
+    loss = next((h.get("eval_loss") or h.get("loss")
+                 for h in reversed(trainer.state.log_history)
+                 if h.get("eval_loss") or h.get("loss") is not None), None)
     meta = {
         "git_head": subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True,
                                    text=True, cwd=ROOT).stdout.strip(),
@@ -353,8 +356,7 @@ def main() -> int:
         "transformers_version": transformers.__version__,
         "train_rows": len(train_rows),
         "val_rows": len(val_rows),
-        "final_loss": trainer.state.log_history[-1].get("eval_loss")
-        or trainer.state.log_history[-1].get("loss"),
+        "final_loss": loss,
     }
     (out / "run_meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2),
                                        encoding="utf-8")

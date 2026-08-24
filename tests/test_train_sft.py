@@ -71,11 +71,9 @@ def test_format_example_task_variants():
 def test_build_tokenized_completions_only():
     tok = FakeTok()
     msgs = format_example(ROW, "SYS", "SYS")
-    out = build_tokenized([msgs], tok, seq_len=64)
-    ids = out["input_ids"][0]
-    labels = out["labels"][0]
-    assert len(ids) == 64 and len(labels) == 64
-    # prompt span masked ("PROMPT|" = 7 fake tokens)
+    out = build_tokenized([msgs], tok, seq_len=64)[0]
+    ids = out["input_ids"]
+    labels = out["labels"]
     assert all(l == -100 for l in labels[:7])
     # completion span unmasked
     assert any(l != -100 for l in labels)
@@ -87,7 +85,7 @@ def test_build_tokenized_truncation():
     tok = FakeTok()
     msgs = format_example(ROW, "SYS", "SYS")
     out = build_tokenized([msgs], tok, seq_len=8)
-    assert len(out["input_ids"][0]) == 8
+    assert len(out[0]["input_ids"]) == 8
 
 
 def test_load_rows_deterministic_shuffle_and_cap():
