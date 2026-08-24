@@ -119,9 +119,13 @@ def build_tokenized(rows, tokenizer, seq_len):
         p_ids = tokenizer(prefix, add_special_tokens=False).input_ids
         f_ids = tokenizer(full, add_special_tokens=False).input_ids
         n_mask = min(len(p_ids), len(f_ids))
-        labels = [-100] * n_mask + f_ids[n_mask:]
-        ids = f_ids[:seq_len]
-        labels = labels[:seq_len]
+        labels = [-100] * n_mask + list(f_ids[n_mask:])
+        # keep the TAIL when over seq_len so completions survive truncation
+        if len(f_ids) > seq_len:
+            ids = f_ids[-seq_len:]
+            labels = labels[-seq_len:]
+        else:
+            ids = f_ids
         pad = seq_len - len(ids)
         ids = ids + [tokenizer.pad_token_id or 0] * pad
         labels = labels + [-100] * pad

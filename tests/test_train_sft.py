@@ -86,6 +86,9 @@ def test_build_tokenized_truncation():
     msgs = format_example(ROW, "SYS", "SYS")
     out = build_tokenized([msgs], tok, seq_len=8)
     assert len(out[0]["input_ids"]) == 8
+    # completion must survive tail-truncation (regression: NaN loss when the
+    # long system prompt pushed the completion out of a small window)
+    assert any(l != -100 for l in out[0]["labels"])
 
 
 def test_load_rows_deterministic_shuffle_and_cap():
