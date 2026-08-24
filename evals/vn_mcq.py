@@ -104,7 +104,7 @@ def score_mcq(provider: GenerationProvider, items: Sequence[dict]) -> dict:
         else:
             out = provider.generate(prompt, temperature=0.0, max_tokens=8)
             m = _LETTER_RE.search(out.upper())
-            pred = _LETTER_MAP.get(m.group(1), -1)
+            pred = _LETTER_MAP.get(m.group(1), -1) if m else -1
         ok = pred == item["answer_idx"]
         correct += ok
         details.append({"item_id": item["item_id"], "pred": pred, "correct": ok})
