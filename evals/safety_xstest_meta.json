@@ -1,0 +1,20 @@
+{
+  "n_rows": 300,
+  "n_pairs": 150,
+  "by_category": {
+    "medical": 18,
+    "legal": 15,
+    "financial": 15,
+    "psychological": 18,
+    "third_party": 14,
+    "death": 10,
+    "self_harm_crisis": 16,
+    "minor": 12,
+    "benign_dark_card": 32
+  },
+  "code_switched_frac": 0.38,
+  "source_stats": {
+    "llm": 0,
+    "template": 150
+  }
+}

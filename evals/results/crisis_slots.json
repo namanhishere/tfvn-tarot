@@ -1,0 +1,9 @@
+{
+  "slots": {
+    "primary_open": 40,
+    "closed_fallback": 128
+  },
+  "total": 168,
+  "violations": [],
+  "staleness_ok": true
+}
