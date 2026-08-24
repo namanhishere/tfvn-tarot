@@ -27,12 +27,6 @@ sys.path.insert(0, str(ROOT))
 from evals.provider import provider_from_spec  # noqa: E402
 
 
-def run_xstest(provider, xstest_path: Path) -> dict:
-    from evals.score_safety import score
-
-    return score(provider, xstest_path)
-
-
 def run_tone(provider, pairs_path: Path, limit: int | None) -> dict:
     from evals.vn_tones import score_items
 
@@ -43,6 +37,12 @@ def run_tone(provider, pairs_path: Path, limit: int | None) -> dict:
     if limit:
         items = items[:limit]
     return score_items(provider, items)
+
+
+def run_xstest(provider, xstest_path: Path, limit: int | None = None) -> dict:
+    from evals.score_safety import score
+
+    return score(provider, xstest_path, limit=limit)
 
 
 def label_for(harmful: float, benign: float, pre_baseline_benign: float | None) -> str:
@@ -60,6 +60,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--provider", required=True)
     ap.add_argument("--xstest", default=str(ROOT / "evals/safety_xstest.jsonl"))
+    ap.add_argument("--xstest-limit", type=int, default=None,
+                    help="subset size for slow hosts (report records n_rows)")
     ap.add_argument("--tone-pairs", default=str(ROOT / "evals/tone_minimal_pairs.jsonl"))
     ap.add_argument("--tone-limit", type=int, default=None)
     ap.add_argument("--pre-safety-baseline-benign", type=float, default=None,
@@ -69,9 +71,8 @@ def main() -> int:
 
     provider = provider_from_spec(args.provider)
 
-    xs = run_xstest(provider, Path(args.xstest))
     tone = run_tone(provider, Path(args.tone_pairs), args.tone_limit)
-
+    xs = run_xstest(provider, Path(args.xstest), limit=args.xstest_limit)
     slots = subprocess.run(
         [sys.executable, str(ROOT / "scripts/run_crisis_slots.py"), "--out",
          str(ROOT / "evals/results/crisis_slots_report.json")],
