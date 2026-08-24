@@ -70,15 +70,25 @@ class LlamaServerProvider(GenerationProvider):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
 
-    def _post(self, path: str, payload: dict) -> dict:
-        req = urllib.request.Request(
-            self.base_url + path,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+    def _post(self, path: str, payload: dict, retries: int = 2) -> dict:
+        import time
+
+        last_err: Optional[Exception] = None
+        for attempt in range(retries + 1):
+            req = urllib.request.Request(
+                self.base_url + path,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST")
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except Exception as e:
+                last_err = e
+                if attempt < retries:
+                    time.sleep(5 * (attempt + 1))
+        raise ProviderError(f"POST {path} failed after {retries + 1} attempts: "
+                            f"{last_err}") from last_err
 
     def generate(self, prompt: str, *, system: str = "", max_tokens: int = 512,
                  temperature: float = 0.7) -> str:

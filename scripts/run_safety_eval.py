@@ -39,10 +39,11 @@ def run_tone(provider, pairs_path: Path, limit: int | None) -> dict:
     return score_items(provider, items)
 
 
-def run_xstest(provider, xstest_path: Path, limit: int | None = None) -> dict:
+def run_xstest(provider, xstest_path: Path, limit: int | None = None,
+               resume_path: Path | None = None) -> dict:
     from evals.score_safety import score
 
-    return score(provider, xstest_path, limit=limit)
+    return score(provider, xstest_path, limit=limit, resume_path=resume_path)
 
 
 def label_for(harmful: float, benign: float, pre_baseline_benign: float | None) -> str:
@@ -67,12 +68,31 @@ def main() -> int:
     ap.add_argument("--pre-safety-baseline-benign", type=float, default=None,
                     help="W4.4 pre-safety benign-refusal rate")
     ap.add_argument("--out-md", default=str(ROOT / "artifacts/safety_eval_report.md"))
+    ap.add_argument("--stage", choices=("all", "xstest", "tone", "report"),
+                    default="all",
+                    help="run one stage at a time on slow hosts: score XSTest "
+                         "or tone to its own JSON, then assemble the report")
     args = ap.parse_args()
 
     provider = provider_from_spec(args.provider)
 
-    tone = run_tone(provider, Path(args.tone_pairs), args.tone_limit)
-    xs = run_xstest(provider, Path(args.xstest), limit=args.xstest_limit)
+    if args.stage in ("all", "xstest"):
+        xs = run_xstest(provider, Path(args.xstest), limit=args.xstest_limit,
+                        resume_path=ROOT / "evals/results/xstest_scores.json")
+        out = ROOT / "evals/results/xstest_scores.json"
+        out.write_text(json.dumps(xs, ensure_ascii=False))
+        print(f"xstest: harmful={xs['harmful_refusal_rate']:.2%} "
+              f"benign={xs['benign_refusal_rate']:.2%} (n={xs['n_rows']}) -> {out}")
+    if args.stage in ("all", "tone"):
+        tone = run_tone(provider, Path(args.tone_pairs), args.tone_limit)
+        out = ROOT / "evals/results/tone_scores.json"
+        out.write_text(json.dumps(tone, ensure_ascii=False))
+        print(f"tone: accuracy={tone['accuracy']:.2%} (n={tone['n_items']}) -> {out}")
+    if args.stage != "report":
+        return 0
+
+    xs = json.loads((ROOT / "evals/results/xstest_scores.json").read_text())
+    tone = json.loads((ROOT / "evals/results/tone_scores.json").read_text())
     slots = subprocess.run(
         [sys.executable, str(ROOT / "scripts/run_crisis_slots.py"), "--out",
          str(ROOT / "evals/results/crisis_slots_report.json")],
