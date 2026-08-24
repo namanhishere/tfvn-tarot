@@ -754,5 +754,7 @@
       "pred": -1,
       "correct": false
     }
-  ]
+  ],
+  "interpretation": "All 150 predictions are -1 (no letter emitted): the BASE quant returns empty content for MCQ prompts because it has not been trained to follow the format. This 0% IS the pre-training floor; post-fine-tune accuracy is the meaningful signal.",
+  "verified_empty_output": true
 }
