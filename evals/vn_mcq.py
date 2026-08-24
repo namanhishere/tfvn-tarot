@@ -11,6 +11,7 @@ otherwise the provider generates an "A/B/C/D" letter answer which is parsed.
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -91,11 +92,20 @@ def format_prompt(item: dict) -> str:
     )
 
 
-def score_mcq(provider: GenerationProvider, items: Sequence[dict]) -> dict:
+def score_mcq(provider, items: Sequence[dict],
+              resume_path: Path | None = None) -> dict:
+    done: dict = {}
+    if resume_path and Path(resume_path).exists():
+        prev = json.loads(Path(resume_path).read_text(encoding="utf-8"))
+        done = {d["item_id"]: d for d in prev.get("details", [])}
+
     used_ll = bool(getattr(provider, "supports_loglikelihood", lambda: False)())
     correct = 0
     details = []
     for item in items:
+        if item["item_id"] in done:
+            details.append(done[item["item_id"]])
+            continue
         prompt = format_prompt(item)
         if used_ll:
             scores = [provider.loglikelihood(prompt + "\nĐáp án:", f" {'ABCD'[i]}")
@@ -107,7 +117,11 @@ def score_mcq(provider: GenerationProvider, items: Sequence[dict]) -> dict:
             pred = _LETTER_MAP.get(m.group(1), -1) if m else -1
         ok = pred == item["answer_idx"]
         correct += ok
-        details.append({"item_id": item["item_id"], "pred": pred, "correct": ok})
+        d = {"item_id": item["item_id"], "pred": pred, "correct": ok}
+        details.append(d)
+        if resume_path:
+            Path(resume_path).write_text(json.dumps(
+                {"details": details}, ensure_ascii=False))
 
     return {
         "provider": provider.name,
