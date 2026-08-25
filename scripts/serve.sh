@@ -33,4 +33,4 @@ exec /home/ubuntu/llama.cpp/build/bin/llama-server \
   -c "$CTX" \
   -t "$THREADS" \
   -tb "$THREADS_PREFILL" \
-  --mmap
+  --load-mode mmap
