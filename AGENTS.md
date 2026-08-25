@@ -16,6 +16,9 @@ GPU box before committing to 2 full epochs. Seq 2048 does NOT fit 6 GB even
 with expandable_segments (OOM at micro_batch 1); local pilots cap at seq 512.
 Ablations @0.6B/600rows/1ep/lr3e-4/seq512 (same core eval): r32+core 1.709 <
 r32+bulk 1.771 < r16+core 1.800 — plan defaults (r32, core-only) confirmed.
+Deployment round-trip proven with trained (pilot) weights: merge → F16 GGUF
+→ Q5_K_M → llama-server → Vietnamese reading with inline EN card name.
+serve.sh now uses `--load-mode mmap` (old `--mmap` deprecated in llama.cpp).
 
 ---
 
