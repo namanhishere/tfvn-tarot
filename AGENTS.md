@@ -37,6 +37,9 @@ evals/results/*fullcore0.6b*.json — the reference curve for W4.4 gates.
 Full-scale tier check: bulk (8.5k rows) eval on core val = 1.196 vs core-only
 1.168 — core-only ship decision confirmed at scale; extra synthetic bulk data
 dilutes in-domain fit even before contamination concerns.
+Full-corpus 2-epoch curve (0.6B): eval 1.445→1.086 @1.0 → 0.976 @1.75 →
+plateau 0.970 through epoch 2. Second epoch adds only −0.116 with a hard
+floor ~1.75 epochs; if cloud budget is tight, 1.5–2 epochs is the window.
 
 ---
 
