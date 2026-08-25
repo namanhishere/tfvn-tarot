@@ -26,6 +26,10 @@ run's capacity/seq length).
 VN-MCQ tripwire on pilot merge (loglikelihood, `hf@merged-hf`): 54.3% — the
 proper instrument; llama-server letter-parse is weak (parse failures count
 wrong). Use hf provider for MCQ gates.
+2-epoch lr3e-4 curve (600 rows): eval 1.78→1.544, monotone, flattens ~epoch
+1.7 — plan's `--epochs 2` default confirmed, no overfit at this scale.
+Tone 0.00 on pilot is letter-parse instrument failure (same caveat as MCQ);
+score tone via parseable generations or loglikelihood on the real run.
 
 ---
 
