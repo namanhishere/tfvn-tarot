@@ -23,6 +23,9 @@ Pilot-quant eval baselines (evals/results/*_pilot600_lr3e4.json): drift
 mean_vi_frac 0.887 / collapse 0.00 (smoke: 0.700) — training lifts VI fraction;
 faithfulness single 1.00, three 0.90, ten 0.00 (10-card stratum needs the real
 run's capacity/seq length).
+VN-MCQ tripwire on pilot merge (loglikelihood, `hf@merged-hf`): 54.3% — the
+proper instrument; llama-server letter-parse is weak (parse failures count
+wrong). Use hf provider for MCQ gates.
 
 ---
 
