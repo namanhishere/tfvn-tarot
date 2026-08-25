@@ -10,6 +10,10 @@ Local P106-100 (6 GB) pilots (2026-08-25): 600-row/1-epoch Qwen3-0.6B run
 green (eval_loss 1.89); 2-epoch run proved the epoch-1 orientation tripwire
 fires and halts (58% Jaccard rate on the undertrained pilot — expected).
 Tripwire only arms when `--epochs > 1`; smoke mode disables it.
+Pilot findings for the cloud run: `--lr 3e-4` beats the default `1e-4`
+(eval 1.709 vs 1.893 @600 rows/1 epoch, 0.6B) — sweep LR first epoch on the
+GPU box before committing to 2 full epochs. Seq 2048 does NOT fit 6 GB even
+with expandable_segments (OOM at micro_batch 1); local pilots cap at seq 512.
 
 ---
 
