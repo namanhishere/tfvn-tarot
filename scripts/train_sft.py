@@ -178,8 +178,8 @@ class OrientationTripwire:
         flagged = 0
         for cid, orientations in self.cards:
             name = orientations["upright"]["name_en"]
-            up = set(self._gen(name, "upright").lower().split())
-            rev = set(self._gen(name, "reversed").lower().split())
+            up = set(self._gen("tình yêu", name, "upright").lower().split())
+            rev = set(self._gen("tình yêu", name, "reversed").lower().split())
             j = self._jaccard(up, rev)
             over = j > self.threshold
             flagged += over
