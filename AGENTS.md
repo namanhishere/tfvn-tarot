@@ -14,6 +14,8 @@ Pilot findings for the cloud run: `--lr 3e-4` beats the default `1e-4`
 (eval 1.709 vs 1.893 @600 rows/1 epoch, 0.6B) — sweep LR first epoch on the
 GPU box before committing to 2 full epochs. Seq 2048 does NOT fit 6 GB even
 with expandable_segments (OOM at micro_batch 1); local pilots cap at seq 512.
+Ablations @0.6B/600rows/1ep/lr3e-4/seq512 (same core eval): r32+core 1.709 <
+r32+bulk 1.771 < r16+core 1.800 — plan defaults (r32, core-only) confirmed.
 
 ---
 
