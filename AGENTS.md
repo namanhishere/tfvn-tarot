@@ -3,7 +3,9 @@
 **Status: all plan waves W0–W7 + F1–F4 executed and committed (2026-08-24).**
 The authoritative plan is `.omo/plans/vn-tarot-llm.md`; machine audit lives in
 `artifacts/final_verification.json` (8/8) with narrative in
-`artifacts/plan_compliance_audit.md`. 129 tests: `.venv/bin/python -m pytest tests/ -q --ignore=tests/webapp`.
+`artifacts/plan_compliance_audit.md`. 141 tests (incl. 3 cross-process serving
+E2E, run with `RUN_E2E=1`; smoke quant at `/tmp/quants/model.q5_k_m_imx.gguf`):
+`.venv/bin/python -m pytest tests/ -q --ignore=tests/webapp`.
 
 ---
 
