@@ -1,0 +1,262 @@
+{
+  "provider": "llama-server",
+  "seed": 42,
+  "n_cases": 30,
+  "overall_pass_rate": 0.5666666666666667,
+  "by_stratum": {
+    "single": {
+      "total": 10,
+      "passed": 8,
+      "pass_rate": 0.8
+    },
+    "three": {
+      "total": 10,
+      "passed": 9,
+      "pass_rate": 0.9
+    },
+    "ten": {
+      "total": 10,
+      "passed": 0,
+      "pass_rate": 0.0
+    }
+  },
+  "results": [
+    {
+      "case_id": "single_000",
+      "stratum": "single",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "single_001",
+      "stratum": "single",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "single_002",
+      "stratum": "single",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "single_003",
+      "stratum": "single",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "single_004",
+      "stratum": "single",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "single_005",
+      "stratum": "single",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "single_006",
+      "stratum": "single",
+      "passed": false,
+      "failures": [
+        "missing_positions=['hiện tại']"
+      ]
+    },
+    {
+      "case_id": "single_007",
+      "stratum": "single",
+      "passed": false,
+      "failures": [
+        "hallucinated=['The Lovers']"
+      ]
+    },
+    {
+      "case_id": "single_008",
+      "stratum": "single",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "single_009",
+      "stratum": "single",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_000",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_001",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_002",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_003",
+      "stratum": "three",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Justice']"
+      ]
+    },
+    {
+      "case_id": "three_004",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_005",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_006",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_007",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_008",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "three_009",
+      "stratum": "three",
+      "passed": true,
+      "failures": []
+    },
+    {
+      "case_id": "ten_000",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Judgement', 'Knight of Cups', 'Ten of Cups', 'King of Pentacles']",
+        "missing_positions=['trên đầu', 'bên dưới', 'lời khuyên', 'hy vọng và nỗi sợ']"
+      ]
+    },
+    {
+      "case_id": "ten_001",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Queen of Wands', 'Eight of Pentacles', 'Six of Cups']",
+        "missing_positions=['hy vọng và nỗi sợ']"
+      ]
+    },
+    {
+      "case_id": "ten_002",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Strength', 'Five of Cups', 'King of Swords', 'Ace of Swords', 'Nine of Swords', 'The Moon']",
+        "missing_positions=['trên đầu', 'bên dưới', 'hy vọng và nỗi sợ']"
+      ]
+    },
+    {
+      "case_id": "ten_003",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Two of Swords']",
+        "missing_positions=['thách thức', 'lời khuyên', 'hy vọng và nỗi sợ', 'kết quả']"
+      ]
+    },
+    {
+      "case_id": "ten_004",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Justice', 'Judgement', 'Five of Swords', 'Strength']",
+        "missing_positions=['hy vọng và nỗi sợ', 'kết quả']"
+      ]
+    },
+    {
+      "case_id": "ten_005",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Ten of Swords', 'Page of Wands', 'Temperance']",
+        "missing_positions=['hy vọng và nỗi sợ', 'kết quả']"
+      ]
+    },
+    {
+      "case_id": "ten_006",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Temperance', 'Two of Cups', 'Six of Swords', 'Knight of Wands', 'Ace of Wands']",
+        "missing_positions=['hy vọng và nỗi sợ']",
+        "orientation_violations=[{'card_id': 64, 'reason': 'reversed_named_as_upright', 'name': 'Ace of Pentacles'}]"
+      ]
+    },
+    {
+      "case_id": "ten_007",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Ace of Pentacles', 'Knight of Cups', 'Judgement', 'Four of Pentacles']",
+        "missing_positions=['bên dưới', 'hy vọng và nỗi sợ', 'kết quả']"
+      ]
+    },
+    {
+      "case_id": "ten_008",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Temperance', 'Page of Cups', 'Four of Cups', 'Nine of Wands', 'The Chariot', 'Wheel of Fortune', 'Wheel of Fortune']",
+        "missing_positions=['trên đầu', 'bên dưới', 'hy vọng và nỗi sợ']"
+      ]
+    },
+    {
+      "case_id": "ten_009",
+      "stratum": "ten",
+      "passed": false,
+      "failures": [
+        "unmentioned_drawn_cards=['Page of Swords', 'Seven of Pentacles', 'Knight of Wands', 'Four of Pentacles']",
+        "missing_positions=['trên đầu', 'lời khuyên', 'hy vọng và nỗi sợ', 'kết quả']"
+      ]
+    }
+  ],
+  "floor_check": {
+    "meets_all_floors": false,
+    "verdicts": {
+      "single": {
+        "rate": 0.8,
+        "floor": 0.5,
+        "meets_floor": true
+      },
+      "three": {
+        "rate": 0.9,
+        "floor": 0.5,
+        "meets_floor": true
+      },
+      "ten": {
+        "rate": 0.0,
+        "floor": 0.5,
+        "meets_floor": false
+      }
+    }
+  }
+}
