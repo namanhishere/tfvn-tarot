@@ -6,6 +6,10 @@ The authoritative plan is `.omo/plans/vn-tarot-llm.md`; machine audit lives in
 `artifacts/plan_compliance_audit.md`. 141 tests (incl. 3 cross-process serving
 E2E, run with `RUN_E2E=1`; smoke quant at `/tmp/quants/model.q5_k_m_imx.gguf`):
 `.venv/bin/python -m pytest tests/ -q --ignore=tests/webapp`.
+Local P106-100 (6 GB) pilots (2026-08-25): 600-row/1-epoch Qwen3-0.6B run
+green (eval_loss 1.89); 2-epoch run proved the epoch-1 orientation tripwire
+fires and halts (58% Jaccard rate on the undertrained pilot — expected).
+Tripwire only arms when `--epochs > 1`; smoke mode disables it.
 
 ---
 
