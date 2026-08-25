@@ -30,6 +30,10 @@ wrong). Use hf provider for MCQ gates.
 1.7 — plan's `--epochs 2` default confirmed, no overfit at this scale.
 Tone 0.00 on pilot is letter-parse instrument failure (same caveat as MCQ);
 score tone via parseable generations or loglikelihood on the real run.
+Full-core pilot (all 5k core rows, 1 epoch, lr3e-4, seq512, 78 min local):
+eval_loss 1.168; drift VI-frac 0.898 / collapse 0.00; faithfulness single
+0.80 three 0.90 ten 0.00; MCQ-LL retention 56.7%. Baselines in
+evals/results/*fullcore0.6b*.json — the reference curve for W4.4 gates.
 
 ---
 
