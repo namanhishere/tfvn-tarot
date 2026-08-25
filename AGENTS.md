@@ -19,6 +19,10 @@ r32+bulk 1.771 < r16+core 1.800 — plan defaults (r32, core-only) confirmed.
 Deployment round-trip proven with trained (pilot) weights: merge → F16 GGUF
 → Q5_K_M → llama-server → Vietnamese reading with inline EN card name.
 serve.sh now uses `--load-mode mmap` (old `--mmap` deprecated in llama.cpp).
+Pilot-quant eval baselines (evals/results/*_pilot600_lr3e4.json): drift
+mean_vi_frac 0.887 / collapse 0.00 (smoke: 0.700) — training lifts VI fraction;
+faithfulness single 1.00, three 0.90, ten 0.00 (10-card stratum needs the real
+run's capacity/seq length).
 
 ---
 
