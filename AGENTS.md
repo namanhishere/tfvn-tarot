@@ -34,6 +34,9 @@ Full-core pilot (all 5k core rows, 1 epoch, lr3e-4, seq512, 78 min local):
 eval_loss 1.168; drift VI-frac 0.898 / collapse 0.00; faithfulness single
 0.80 three 0.90 ten 0.00; MCQ-LL retention 56.7%. Baselines in
 evals/results/*fullcore0.6b*.json — the reference curve for W4.4 gates.
+Full-scale tier check: bulk (8.5k rows) eval on core val = 1.196 vs core-only
+1.168 — core-only ship decision confirmed at scale; extra synthetic bulk data
+dilutes in-domain fit even before contamination concerns.
 
 ---
 
