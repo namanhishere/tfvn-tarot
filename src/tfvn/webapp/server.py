@@ -29,6 +29,7 @@ from fastapi.staticfiles import StaticFiles
 from ..llm_client import load_env
 from .catalog import router as catalog_router
 from .filtering import router as filtering_router
+from .readings import router as readings_router
 from .reports import router as reports_router
 from .runs import router as runs_router
 from .stats import router as stats_router
@@ -66,6 +67,7 @@ app.include_router(stats_router)
 app.include_router(filtering_router)
 app.include_router(runs_router)
 app.include_router(reports_router)
+app.include_router(readings_router)
 
 
 @app.get("/api/health")
