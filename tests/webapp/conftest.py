@@ -472,6 +472,7 @@ def _reset_webapp_state():
     rewrote a fixture file or started a fake run would poison the next test.
     """
     yield
+    from tfvn.reading_stream import _SESSIONS as _READING_SESSIONS
     from tfvn.webapp import catalog, runs, stats
 
     catalog.invalidate()
@@ -481,6 +482,7 @@ def _reset_webapp_state():
     runs._RECONCILED = False
     runs._ORPHANED = []
     runs._HISTORY = []
+    _READING_SESSIONS.clear()
 
 
 def make_client(router) -> Any:

@@ -65,6 +65,11 @@ SESSION_CAP = 100         # bound memory; evict oldest beyond this
 
 LOG_DIR = ROOT / "logs" / "readings"
 
+
+def _log_dir() -> Path:
+    """Resolved per call; READING_LOG_DIR overrides the repo default."""
+    return Path(os.environ.get("READING_LOG_DIR", str(LOG_DIR)))
+
 _TIMEOUT = httpx.Timeout(connect=5.0, read=300.0, write=30.0, pool=30.0)
 
 
@@ -235,10 +240,10 @@ async def stream_turn(session: ReadingSession, content: str,
     Token deltas are traced compactly (chars only) so the JSONL trace stays
     small; every other event is stored whole. History is committed ONLY on
     'done' — an interrupted stream leaves the session unchanged, so a client
-    may safely resend the same turn.
+    may safely resend the same turn. ``log_dir`` overrides READING_LOG_DIR.
     """
     started = time.perf_counter()
-    log_path = (log_dir or LOG_DIR) / f"{session.session_id}.jsonl"
+    log_path = (log_dir or _log_dir()) / f"{session.session_id}.jsonl"
 
     def emit(event: Dict[str, Any]) -> Dict[str, Any]:
         _trace(log_path, {"session_id": session.session_id, **event})
