@@ -17,6 +17,30 @@ uvicorn tfvn.serve:app --host 127.0.0.1 --port 8078
 `GET /health` → `{"ok": true, "deck_size": 78, "n_ctx": 4096}`.
 `POST /reading` `{"question_vi": "...", "seed": 42, "n_cards": 3}`.
 
+## Readings web UI (multi-turn, streaming)
+
+The dataset-viewer webapp ships a full chat UI over this serving path:
+
+```bash
+# llama-server as above (step 2), then:
+PYTHONPATH=src .venv/bin/python scripts/serve_webapp.py   # 127.0.0.1:8000
+# open http://127.0.0.1:8000/#/readings
+```
+
+* one draw per conversation (byte-stable prefix → prompt-cache hits on every
+  follow-up turn); "Bài mới" drops the session and redraws;
+* tokens stream live from llama-server (`stream:true` → SSE);
+* deterministic validators run per completed turn: fail → ONE constrained
+  regeneration → still failing → the reading ships with a visible
+  `validation_warning` badge (never silent, never an error);
+* crisis phrasing routes BEFORE the model (hotline / static fallback);
+  ambiguous first questions get ONE clarifying question;
+* the Pipeline trace panel mirrors every step and appends the same events to
+  `logs/readings/<session_id>.jsonl` (override dir with `READING_LOG_DIR`);
+* a red banner + status dot show when llama-server is down (15 s probe);
+  an interrupted stream never commits server-side, so the bubble offers a
+  verbatim Retry; the transcript survives page reloads (sessionStorage).
+
 ## Minimum requirements
 
 - **RAM: 4 GB free** beyond the OS baseline. The Q5_K_M quant of Qwen3-1.7B

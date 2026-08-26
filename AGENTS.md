@@ -41,6 +41,20 @@ Full-corpus 2-epoch curve (0.6B): eval 1.445→1.086 @1.0 → 0.976 @1.75 →
 plateau 0.970 through epoch 2. Second epoch adds only −0.116 with a hard
 floor ~1.75 epochs; if cloud budget is tight, 1.5–2 epochs is the window.
 
+**Readings web UI (2026-08-26):** multi-turn streaming chat added to the
+webapp (`#/readings`). Pipeline in `src/tfvn/reading_stream.py` — fixed draw
+per session (byte-stable prefix → prompt-cache hits), SSE token streaming,
+validators + ONE constrained regen (imports crisis gate/validators from
+`tfvn.serve`, single source of truth), call-trace to
+`logs/readings/<sid>.jsonl` (override `READING_LOG_DIR`). Router
+`src/tfvn/webapp/readings.py`; view `webapp/static/views/readings.js`.
+Interrupted streams never commit → verbatim client Retry is safe. New dep
+`httpx` in requirements-web.txt. Tests: `tests/webapp/test_readings.py`
+(11, fake llama via httpx.MockTransport). Live-verified E2E against the
+fullcore pilot quant (banner-down, probe recovery, 2-turn conversation,
+reload persistence); pilot model trips validation_warning often (missing
+"vị trí" labels — known 0.6B faithfulness gap, warning path works).
+
 ---
 
 ## Repo conventions (unchanged, follow these)
