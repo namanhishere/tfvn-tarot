@@ -23,7 +23,7 @@
 (function () {
   'use strict';
 
-  var ROUTES = ['dashboard', 'cards', 'dataset', 'raw', 'stats', 'reports', 'runs'];
+  var ROUTES = ['dashboard', 'readings', 'cards', 'dataset', 'raw', 'stats', 'reports', 'runs'];
   var viewEl = document.getElementById('view');
   var loadedViews = {};
 
